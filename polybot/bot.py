@@ -2,7 +2,12 @@ import telebot
 from loguru import logger
 import os
 import time
+from datetime import datetime
 from telebot.types import InputFile
+from img_proc import Img
+import boto3
+import polybot_helper_lib
+import requests
 
 
 class Bot:
@@ -65,13 +70,226 @@ class Bot:
         self.send_text(msg['chat']['id'], f'Your original message: {msg["text"]}')
 
 
-class ObjectDetectionBot(Bot):
+class QuoteBot(Bot):
     def handle_message(self, msg):
         logger.info(f'Incoming message: {msg}')
 
-        if self.is_current_msg_photo(msg):
-            photo_path = self.download_user_photo(msg)
+        if msg["text"] != 'Please don\'t quote me':
+            self.send_text_with_quote(msg['chat']['id'], msg["text"], quoted_msg_id=msg["message_id"])
 
-            # TODO upload the photo to S3
-            # TODO send an HTTP request to the `yolo5` service for prediction
-            # TODO send the returned results to the Telegram end-user
+
+class ObjectDetectionBot(Bot):
+    def __init__(self, token, telegram_chat_url, images_bucket):
+        super().__init__(token, telegram_chat_url)
+        self.media_group = None
+        self.filter = None
+        self.filters_list = ["Blur", "Contour", "Rotate", "Segment", "Salt and pepper", "Concat", "Segment"]
+        self.previous_pic = None
+        self.images_bucket = images_bucket
+
+
+    @staticmethod
+    def _apply_filter(img, filter):
+        if filter == "Blur":
+            img.blur()
+        elif filter == "Contour":
+            img.contour()
+        elif filter == "Rotate":
+            img.rotate()
+        elif filter == "Segment":
+            img.segment()
+        elif filter == "Salt and pepper":
+            img.salt_n_pepper()
+
+
+    def add_date_to_filename(self, file_path):
+        # Split the file path into directory and filename
+        directory, filename = os.path.split(file_path)
+
+        # Get the current date
+        current_date = datetime.now().strftime("%Y-%m-%d")
+
+        # Extract file extension
+        name, extension = os.path.splitext(filename)
+
+        # Create the new filename with the date appended
+        new_filename = f"{name}_{current_date}{extension}"
+
+        # Construct the new file path
+        new_file_path = os.path.join(directory, new_filename)
+
+        try:
+            # Rename the file
+            os.rename(file_path, new_file_path)
+            print(f"File renamed to: {new_filename}")
+            return new_file_path
+        except Exception as e:
+            print(f"Error: {e}")
+        return None
+
+    """
+    def upload_photo_to_s3(self, photo_path):
+
+        Upload the photo to S3 bucket.
+
+        Parameters:
+            photo_path (str): The path to the photo file locally.
+
+        Returns:
+            s3_key (str): The new path to the photo file in S3.
+
+
+        try:
+            # Specify the directory path in the bucket
+            s3_directory_path = 'photos/'
+            s3_predicted_directory_path = 'predicted_photos/'
+            s3_json_folder = 'json/'
+
+            # Ensure the directory exists in the S3 bucket
+            self.ensure_s3_directory_exists('images_bucket', s3_directory_path)
+            self.ensure_s3_directory_exists('images_bucket', s3_predicted_directory_path)
+            self.ensure_s3_directory_exists('images_bucket', s3_json_folder)
+
+            # Extract filename from the path
+            filename = os.path.basename(photo_path)
+
+            # Combine directory path and filename to form the S3 key
+            s3_key = s3_directory_path + filename
+
+            # Upload the photo to S3
+            self.s3.upload_file(photo_path, 'yaelwil-dockerproject', s3_key)
+
+            # Return the S3 key
+            return s3_key
+        except Exception as e:
+            logger.error(f"Error uploading photo to S3: {e}")
+            return None
+    """
+
+    def handle_message(self, msg):
+
+        # TODO upload the photo to S3
+        # TODO send an HTTP request to the `yolo5` service for prediction
+        # TODO send the returned results to the Telegram end-user
+
+        logger.info(f'Incoming message: {msg}')
+        # check if the message contain a media group, this is happening when the user send more than one images at once
+        if self.media_group is None:
+            self.media_group = msg.get("media_group_id")
+        elif self.media_group != msg.get("media_group_id"):
+            self.media_group = msg.get("media_group_id")
+            # resetting the filter in case the user send another group of pictures
+            self.filter = None
+
+        if self.filter is None or msg.get("media_group_id") is None:
+            # when getting an image without a media_group_id, we put the "caption" value in .filter
+            if msg.get("caption"):
+                self.filter = msg.get("caption")
+            else:
+                self.send_text(
+                    msg['chat']['id'],
+                    f"You have to provide a picture and one of the following filters: {self.filters_list}"
+                )
+                return None
+
+        if self.filter == "Concat":
+            if msg.get("media_group_id"):
+                if msg.get("caption"):
+                    photo_path = self.download_user_photo(msg)
+                    process_photo = Img(photo_path)
+                    self.previous_pic = process_photo
+                else:
+                    # this is a special case for using concat,
+                    # the concat caption is excepted to be sent with two pictures, the first one with caption...
+                    photo_path = self.download_user_photo(msg)
+                    process_photo = Img(photo_path)
+                    process_photo.concat(self.previous_pic)
+                    processed_pic = process_photo.save_img()
+                    self.send_photo(msg['chat']['id'], processed_pic)
+
+        elif msg.get("media_group_id") is None:
+            if self.filter in self.filters_list:
+                try:
+                    photo_path = self.download_user_photo(msg)
+                    process_photo = Img(photo_path)
+                    self._apply_filter(process_photo, self.filter)
+                    self.filter = None
+                    processed_pic = process_photo.save_img()
+                    self.send_photo(msg['chat']['id'], processed_pic)
+                except Exception as E:
+                    self.send_text(
+                        msg['chat']['id'],
+                        f"An error occurred. You have to provide a picture and one of the following filters: {self.filters_list}"
+                    )
+                    logger.info(f"ERR: {E}")
+            elif self.filter == "Predict":
+
+                images_dir = "photos/predicted_images"
+
+                photo_path = self.download_user_photo(msg)
+                photo_path = self.add_date_to_filename(photo_path)
+                s3 = boto3.client('s3')
+                polybot_helper_lib.upload_file(photo_path, self.images_bucket, s3)
+                yolo5_base_url = "http://yolo5:8081/predict"
+                s3_img_name = os.path.split(photo_path)
+                yolo5_url = f"{yolo5_base_url}?imgName={s3_img_name[1]}"
+                for i in range(5):
+                    try:
+                        logger.info(f"File name: {s3_img_name[1]}")
+                        s3.head_object(
+                            Bucket=self.images_bucket,
+                            Key=s3_img_name[1]
+                        )
+                        break
+                    except Exception as E:
+                        logger.info(f"file probably not there yet :/ attempt no: {i}")
+                        time.sleep(5)
+                try:
+                    response = requests.post(yolo5_url)
+                    if not os.path.exists(images_dir):
+                        os.makedirs(images_dir)
+
+                    s3.download_file(os.environ["BUCKET_NAME"], f"predicted_img/{s3_img_name[1]}", f'{images_dir}/{s3_img_name[1]}')
+
+                    results = polybot_helper_lib.count_objects_in_dict(response.json)
+
+                    self.send_photo(msg['chat']['id'], f'{images_dir}/{s3_img_name[1]}')
+                    self.send_text(msg['chat']['id'], str(results))
+                    print(response.status_code)
+                except Exception as e:
+                    print("WHY???")
+                    print(e)
+                print(f"processing: {yolo5_url}")
+
+                self.send_text(
+                    msg['chat']['id'],
+                    f"Processing: {yolo5_url}"
+                )
+
+
+            else:
+                self.send_text(
+                    msg['chat']['id'],
+                    f"An error occurred. You have to provide a picture and one of the following filters: {self.filters_list}"
+                )
+                self.filter = None
+
+        else:
+            if self.filter in self.filters_list:
+                try:
+                    photo_path = self.download_user_photo(msg)
+                    process_photo = Img(photo_path)
+                    self._apply_filter(process_photo, self.filter)
+                    processed_pic = process_photo.save_img()
+                    self.send_photo(msg['chat']['id'], processed_pic)
+                except Exception:
+                    self.send_text(
+                        msg['chat']['id'],
+                        f"An error occurred. ou have to provide a picture and one of the following filters: {self.filters_list}"
+                    )
+            else:
+                self.send_text(
+                    msg['chat']['id'],
+                    f"An error occurred. ou have to provide a picture and one of the following filters: {self.filters_list}"
+                )
+                self.filter = None

@@ -1,0 +1,105 @@
+# syntax=docker/dockerfile:1
+services:
+
+  mongo1:
+    image: ${mongodb_image}
+    ports:
+      - 27017:27017
+    hostname: mongo1
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongo1
+
+    volumes:
+      - mongo-vol1:/data/db
+
+    networks:
+      - mongoCluster
+      - yolo-comm
+
+  mongo2:
+    image: ${mongodb_image}
+    ports:
+      - 27018:27017
+    hostname: mongo2
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongo2
+    networks:
+      - mongoCluster
+
+    volumes:
+      - mongo-vol2:/data/db
+
+  mongo3:
+    image: ${mongodb_image}
+    ports:
+      - 27019:27017
+    hostname: mongo3
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongo3
+    networks:
+      - mongoCluster
+      - yolo-comm
+
+    volumes:
+      - mongo-vol3:/data/db
+
+  mongoinit:
+    image: ${mongodb_image}
+    depends_on:
+      - mongo2
+      - mongo3
+      - mongo1
+    volumes:
+      - ./script_mount/:/script_mount/
+
+    command: /bin/bash script_mount/relset.sh
+    networks:
+      - mongoCluster
+
+  yolo5:
+    image: ${yolo5_image}
+    container_name: yolo5
+    ports:
+      - 8081:8081
+
+    networks:
+      - yolo-comm
+      - yolo_to_polybot
+
+    environment:
+      - BUCKET_NAME=${BUCKET_NAME}
+
+    volumes:
+      - ~/.aws/:/root/.aws/
+
+    depends_on:
+      - mongoinit
+
+
+  polybot:
+    image: ${polybot_image}
+    ports:
+      - 8443:8443
+
+    volumes:
+      - ~/.aws/:/root/.aws/
+
+    depends_on:
+      - mongoinit
+      - yolo5
+
+    environment:
+      - BUCKET_NAME=${BUCKET_NAME}
+      - TELEGRAM_APP_URL=${TELEGRAM_APP_URL}
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+
+    networks:
+      - yolo_to_polybot
+
+networks:
+  mongoCluster:
+  yolo-comm:
+  yolo_to_polybot:
+
+volumes:
+  mongo-vol1:
+  mongo-vol2:
+  mongo-vol3:
+

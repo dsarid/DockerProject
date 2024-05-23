@@ -1,12 +1,13 @@
 import flask
 from flask import request
 import os
-from bot import ObjectDetectionBot
+from bot import Bot, QuoteBot, ObjectDetectionBot
 
 app = flask.Flask(__name__)
 
 TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
 TELEGRAM_APP_URL = os.environ['TELEGRAM_APP_URL']
+images_bucket = os.environ['BUCKET_NAME']
 
 
 @app.route('/', methods=['GET'])
@@ -22,6 +23,6 @@ def webhook():
 
 
 if __name__ == "__main__":
-    bot = ObjectDetectionBot(TELEGRAM_TOKEN, TELEGRAM_APP_URL)
+    bot = ObjectDetectionBot(TELEGRAM_TOKEN, TELEGRAM_APP_URL, images_bucket)
 
     app.run(host='0.0.0.0', port=8443)
