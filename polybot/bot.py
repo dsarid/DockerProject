@@ -127,44 +127,6 @@ class ObjectDetectionBot(Bot):
             print(f"Error: {e}")
         return None
 
-    """
-    def upload_photo_to_s3(self, photo_path):
-
-        Upload the photo to S3 bucket.
-
-        Parameters:
-            photo_path (str): The path to the photo file locally.
-
-        Returns:
-            s3_key (str): The new path to the photo file in S3.
-
-
-        try:
-            # Specify the directory path in the bucket
-            s3_directory_path = 'photos/'
-            s3_predicted_directory_path = 'predicted_photos/'
-            s3_json_folder = 'json/'
-
-            # Ensure the directory exists in the S3 bucket
-            self.ensure_s3_directory_exists('images_bucket', s3_directory_path)
-            self.ensure_s3_directory_exists('images_bucket', s3_predicted_directory_path)
-            self.ensure_s3_directory_exists('images_bucket', s3_json_folder)
-
-            # Extract filename from the path
-            filename = os.path.basename(photo_path)
-
-            # Combine directory path and filename to form the S3 key
-            s3_key = s3_directory_path + filename
-
-            # Upload the photo to S3
-            self.s3.upload_file(photo_path, 'yaelwil-dockerproject', s3_key)
-
-            # Return the S3 key
-            return s3_key
-        except Exception as e:
-            logger.error(f"Error uploading photo to S3: {e}")
-            return None
-    """
 
     def handle_message(self, msg):
 
@@ -230,7 +192,7 @@ class ObjectDetectionBot(Bot):
                 photo_path = self.add_date_to_filename(photo_path)
                 s3 = boto3.client('s3')
                 polybot_helper_lib.upload_file(photo_path, self.images_bucket, s3)
-                yolo5_base_url = "http://yolo5:8081/predict"
+                yolo5_base_url = "http://localhost:8081/predict"
                 s3_img_name = os.path.split(photo_path)
                 yolo5_url = f"{yolo5_base_url}?imgName={s3_img_name[1]}"
                 for i in range(5):
@@ -251,7 +213,11 @@ class ObjectDetectionBot(Bot):
 
                     s3.download_file(os.environ["BUCKET_NAME"], f"predicted_img/{s3_img_name[1]}", f'{images_dir}/{s3_img_name[1]}')
 
-                    results = polybot_helper_lib.count_objects_in_dict(response.json)
+                    results_json = response.json().get('labels')
+
+                    results = polybot_helper_lib.count_objects_in_dict(results_json)
+
+                    logger.info(f"results are: {results}")
 
                     self.send_photo(msg['chat']['id'], f'{images_dir}/{s3_img_name[1]}')
                     self.send_text(msg['chat']['id'], str(results))

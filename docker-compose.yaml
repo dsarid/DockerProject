@@ -73,26 +73,6 @@ services:
       - mongoinit
 
 
-  polybot:
-    image: ${polybot_image}
-    ports:
-      - 8443:8443
-
-    volumes:
-      - ~/.aws/:/root/.aws/
-
-    depends_on:
-      - mongoinit
-      - yolo5
-
-    environment:
-      - BUCKET_NAME=${BUCKET_NAME}
-      - TELEGRAM_APP_URL=${TELEGRAM_APP_URL}
-      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
-
-    networks:
-      - yolo_to_polybot
-
 networks:
   mongoCluster:
   yolo-comm:
@@ -102,4 +82,3 @@ volumes:
   mongo-vol1:
   mongo-vol2:
   mongo-vol3:
-
