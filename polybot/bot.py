@@ -192,7 +192,7 @@ class ObjectDetectionBot(Bot):
                 photo_path = self.add_date_to_filename(photo_path)
                 s3 = boto3.client('s3')
                 polybot_helper_lib.upload_file(photo_path, self.images_bucket, s3)
-                yolo5_base_url = "http://localhost:8081/predict"
+                yolo5_base_url = "http://yolo5:8081/predict"
                 s3_img_name = os.path.split(photo_path)
                 yolo5_url = f"{yolo5_base_url}?imgName={s3_img_name[1]}"
                 for i in range(5):
