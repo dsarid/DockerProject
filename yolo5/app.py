@@ -57,7 +57,8 @@ def upload_file(file_name, bucket, object_name=None):
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    # Generates a UUID for this current prediction HTTP request. This id can be used as a reference in logs to identify and track individual prediction requests.
+    # Generates a UUID for this current prediction HTTP request.
+    # This id can be used as a reference in logs to identify and track individual prediction requests.
     prediction_id = str(uuid.uuid4())
 
     logger.info(f'prediction: {prediction_id}. start processing')
@@ -94,10 +95,11 @@ def predict():
     logger.info(f'prediction: {prediction_id}/{img_name}. done')
 
     # This is the path for the predicted image with labels
-    # The predicted image typically includes bounding boxes drawn around the detected objects, along with class labels and possibly confidence scores.
+    # The predicted image typically includes bounding boxes drawn around the detected objects,
+    # along with class labels and possibly confidence scores.
     predicted_img_path = Path(f'static/data/{prediction_id}/{img_name}')
 
-    # TODO Uploads the predicted image (predicted_img_path) to S3 (be careful not to override the original image).
+    # Uploads the predicted image (predicted_img_path) to S3 (be careful not to override the original image).
 
     upload_file(predicted_img_path, os.environ["BUCKET_NAME"], f"predicted_img/{img_name}")
 
@@ -127,12 +129,11 @@ def predict():
 
         logger.info(prediction_summary)
 
-        # TODO store the prediction_summary in MongoDB
+        # store the prediction_summary in MongoDB
         try:
             myclient = pymongo.MongoClient("mongodb://mongo1:27017/")
             mydb = myclient["mydatabase"]
             mycol = mydb["customers"]
-
 
             x = mycol.insert_one(prediction_summary)
         except Exception as e:
