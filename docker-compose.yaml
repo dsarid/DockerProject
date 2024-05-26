@@ -84,6 +84,9 @@ services:
       - mongoinit
       - yolo5
 
+    secrets:
+      - telegram_bot_token.secret
+
     environment:
       - BUCKET_NAME=${BUCKET_NAME}
       - TELEGRAM_APP_URL=${TELEGRAM_APP_URL}

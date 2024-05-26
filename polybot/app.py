@@ -5,7 +5,11 @@ from bot import Bot, QuoteBot, ObjectDetectionBot
 
 app = flask.Flask(__name__)
 
-TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
+
+token_secret_file = open('/run/secrets/telegram_bot_token.secret', 'r')
+TELEGRAM_TOKEN = token_secret_file.read().rstrip()
+token_secret_file.close()
+
 TELEGRAM_APP_URL = os.environ['TELEGRAM_APP_URL']
 images_bucket = os.environ['BUCKET_NAME']
 
