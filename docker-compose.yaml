@@ -66,8 +66,8 @@ services:
     environment:
       - BUCKET_NAME=${BUCKET_NAME}
 
-    volumes:
-      - ~/.aws/:/root/.aws/
+  #  volumes:
+  #    - ~/.aws/:/root/.aws/
 
     depends_on:
       - mongoinit
@@ -77,8 +77,8 @@ services:
     ports:
       - 8443:8443
 
-    volumes:
-      - ~/.aws/:/root/.aws/
+  #  volumes:
+  #    - ~/.aws/:/root/.aws/
 
     depends_on:
       - mongoinit
