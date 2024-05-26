@@ -3,6 +3,7 @@ services:
 
   mongo1:
     image: ${mongodb_image}
+    container_name: mongo1
     ports:
       - 27017:27017
     hostname: mongo1
@@ -17,6 +18,7 @@ services:
 
   mongo2:
     image: ${mongodb_image}
+    container_name: mongo2
     ports:
       - 27018:27017
     hostname: mongo2
@@ -29,6 +31,7 @@ services:
 
   mongo3:
     image: ${mongodb_image}
+    container_name: mongo3
     ports:
       - 27019:27017
     hostname: mongo3
