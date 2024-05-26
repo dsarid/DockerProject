@@ -44,12 +44,17 @@ services:
       - mongo-vol3:/data/db
 
   mongoinit:
-    image: ${MONGO_INIT}
+    image: ${mongodb_image}
+
+    volumes:
+      - ./script_mount/:/script_mount/
 
     depends_on:
       - mongo2
       - mongo3
       - mongo1
+
+    command: /bin/bash script_mount/relset.sh
 
     networks:
       - mongoCluster
