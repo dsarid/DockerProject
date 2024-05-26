@@ -11,6 +11,7 @@ RUN pip install -r requirements.txt
 RUN pip install --upgrade pip
 RUN pip cache purge
 RUN pip install --no-cache-dir matplotlib
+
 # Copy the rest of the application files
 COPY . .
 
