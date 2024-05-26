@@ -73,14 +73,14 @@ jobs:
           source: docker-compose.yaml
           target: PolybotService/
 
-#      - name: Copy relset to the EC2
-#        uses: appleboy/scp-action@master
-#        with:
-#          host: ${{ env.EC2_PUBLIC_IP }}
-#          username: ubuntu
-#          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-#          source: relset.sh
-#          target: PolybotService/script_mount/
+      - name: Copy relset to the EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ env.EC2_PUBLIC_IP }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: script_mount/relset.sh
+          target: PolybotService/script_mount/
 
       - name: Update the Docker Compose project in the EC2
         uses: appleboy/ssh-action@master
