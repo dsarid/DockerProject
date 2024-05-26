@@ -225,12 +225,13 @@ class ObjectDetectionBot(Bot):
                 except Exception as e:
                     print("WHY???")
                     print(e)
+                    self.send_text(
+                        msg['chat']['id'],
+                        f"failed at: {yolo5_url}"
+                    )
                 print(f"processing: {yolo5_url}")
 
-                self.send_text(
-                    msg['chat']['id'],
-                    f"Processing: {yolo5_url}"
-                )
+
 
 
             else:
