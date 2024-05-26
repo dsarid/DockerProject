@@ -109,3 +109,5 @@ volumes:
 secrets:
   telegram_bot_token.secret:
     file: ./telegram_bot_token.secret
+
+# updated ami-role
