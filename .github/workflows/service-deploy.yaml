@@ -94,6 +94,47 @@ jobs:
             # Get the ngrok current domain (you should assume ngrok is already running in the EC2)
             NGROK_DOMAIN=$(curl -s localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
             
+            # generate relset.sh script
+            echo """
+            #!/bin/bash
+            
+            echo "#####################"
+            echo "### !!!RUNNING!!! ###"
+            echo "#####################"
+            
+            sleep 10s
+            
+            echo "#####################"
+            echo "### !!!WAKEUP!!!  ###"
+            echo "#####################"
+            
+            mongosh --host mongo1:27017 <<EOF
+              var cfg = {
+                "_id": "myReplicaSet",
+                "version": 1,
+                "members": [
+                  {
+                    "_id": 0,
+                    "host": "mongo1:27017",
+                    "priority": 2
+                  },
+                  {
+                    "_id": 1,
+                    "host": "mongo2:27017",
+                    "priority": 0
+                  },
+                  {
+                    "_id": 2,
+                    "host": "mongo3:27017",
+                    "priority": 0
+                  }
+                ]
+              };
+              rs.initiate(cfg);
+            EOF
+
+            """ > ./script_mount/relset.sh
+            
             # Generate .env file
             echo """
             BUCKET_NAME=dsarid-docker-project-bucket
