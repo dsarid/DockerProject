@@ -2,7 +2,7 @@ import time
 from pathlib import Path
 from flask import Flask, request
 from bson import ObjectId
-from detect import run
+from detect import run  # this library is part of yolo5 base image
 import uuid
 import yaml
 from loguru import logger
