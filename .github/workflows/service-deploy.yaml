@@ -101,8 +101,8 @@ jobs:
             # Base image
             mongodb_image=mongo:5
             
-            POLYBOT_IMG_NAME=docker-project-polybot:${{ github.run_number }}
-            YOLO5_IMG_NAME=docker-project-yolo5:${{ github.run_number }}
+            POLYBOT_IMG_NAME=019273956931.dkr.ecr.eu-central-1.amazonaws.com/docker-project-polybot:${{ github.run_number }}
+            YOLO5_IMG_NAME=019273956931.dkr.ecr.eu-central-1.amazonaws.com/docker-project-yolo5:${{ github.run_number }}
             TELEGRAM_APP_URL=$NGROK_DOMAIN
             """ > .env
             
