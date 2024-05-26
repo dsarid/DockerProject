@@ -54,7 +54,7 @@ services:
       - mongoCluster
 
   yolo5:
-    image: ${yolo5_image}
+    image: ${YOLO5_IMG_NAME}
     container_name: yolo5
     ports:
       - 8081:8081
@@ -73,7 +73,7 @@ services:
       - mongoinit
 
   polybot:
-    image: ${polybot_image}
+    image: ${POLYBOT_IMG_NAME}
     ports:
       - 8443:8443
 
