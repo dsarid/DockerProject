@@ -59,7 +59,6 @@ jobs:
     needs:
       - PolybotBuild
       - Yolo5Build
-      - MongoInit
 
     steps:
       - name: Checkout the repo code
