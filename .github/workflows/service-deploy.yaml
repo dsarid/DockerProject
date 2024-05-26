@@ -103,9 +103,9 @@ jobs:
             
             # Take the service down
             docker compose down
-            docker volume rm polybotservice_mongodb_primary_volume
-            docker volume rm polybotservice_mongodb_secondary_1_volume
-            docker volume rm polybotservice_mongodb_secondary_2_volume
+            # docker volume rm polybotservice_mongodb_primary_volume
+            # docker volume rm polybotservice_mongodb_secondary_1_volume
+            # docker volume rm polybotservice_mongodb_secondary_2_volume
             
             # Take it up with the current updated values
             docker compose up -d
