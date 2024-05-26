@@ -129,7 +129,7 @@ def predict():
 
         logger.info(prediction_summary)
 
-        store the prediction_summary in MongoDB
+        # store the prediction_summary in MongoDB
         try:
             myclient = pymongo.MongoClient("mongodb://mongo1:27017/")
             mydb = myclient["mydatabase"]
