@@ -98,8 +98,6 @@ jobs:
             echo """
             BUCKET_NAME=dsarid-docker-project-bucket
 
-            TELEGRAM_APP_URL=https://alpaca-star-early.ngrok-free.app
-
             # Base image
             mongodb_image=mongo:5
             
