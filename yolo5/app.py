@@ -130,14 +130,14 @@ def predict():
         logger.info(prediction_summary)
 
         # store the prediction_summary in MongoDB
-        try:
-            myclient = pymongo.MongoClient("mongodb://mongo1:27017/")
-            mydb = myclient["mydatabase"]
-            mycol = mydb["customers"]
-
-            x = mycol.insert_one(prediction_summary)
-        except Exception as e:
-            return str(e), 500
+        # try:
+        #     myclient = pymongo.MongoClient("mongodb://mongo1:27017/")
+        #     mydb = myclient["mydatabase"]
+        #     mycol = mydb["customers"]
+        #
+        #     x = mycol.insert_one(prediction_summary)
+        # except Exception as e:
+        #     return str(e), 500
 
         return convert_objectid(prediction_summary), 200
     else:
