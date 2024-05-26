@@ -90,7 +90,7 @@ services:
     environment:
       - BUCKET_NAME=${BUCKET_NAME}
       - TELEGRAM_APP_URL=${TELEGRAM_APP_URL}
-      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      # - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
 
     networks:
       - yolo_to_polybot
@@ -105,3 +105,7 @@ volumes:
   mongo-vol1:
   mongo-vol2:
   mongo-vol3:
+
+secrets:
+  telegram_bot_token.secret:
+    file: ./telegram_bot_token.secret
