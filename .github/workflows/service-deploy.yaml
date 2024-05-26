@@ -53,14 +53,34 @@ jobs:
           docker tag $IMAGE_NAME 019273956931.dkr.ecr.eu-central-1.amazonaws.com/$IMAGE_NAME
           docker push 019273956931.dkr.ecr.eu-central-1.amazonaws.com/$IMAGE_NAME
 
+  MongoInit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo code
+        uses: actions/checkout@v2
+
+      - name: Build and push image
+        run: |
+          cd yolo5
+          
+          export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 019273956931.dkr.ecr.eu-central-1.amazonaws.com
+               
+          # docker login -u ${{ secrets.DOCKER_REPO_USERNAME }} -p ${{ secrets.DOCKER_REPO_PASSWORD }}
+
+          IMAGE_NAME=docker-project-mongoinit:${{ github.run_number }}
+          docker build -t $IMAGE_NAME .
+          docker tag $IMAGE_NAME 019273956931.dkr.ecr.eu-central-1.amazonaws.com/$IMAGE_NAME
+          docker push 019273956931.dkr.ecr.eu-central-1.amazonaws.com/$IMAGE_NAME
+
   Deploy:
     name: Deploy Docker compose project
     runs-on: ubuntu-latest
     needs:
       - PolybotBuild
       - Yolo5Build
-
-
+      - MongoInit
 
     steps:
       - name: Checkout the repo code
@@ -75,14 +95,14 @@ jobs:
           source: docker-compose.yaml
           target: PolybotService/
 
-      - name: Copy relset to the EC2
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ env.EC2_PUBLIC_IP }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          source: relset.sh
-          target: PolybotService/script_mount/
+#      - name: Copy relset to the EC2
+#        uses: appleboy/scp-action@master
+#        with:
+#          host: ${{ env.EC2_PUBLIC_IP }}
+#          username: ubuntu
+#          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+#          source: relset.sh
+#          target: PolybotService/script_mount/
 
       - name: Update the Docker Compose project in the EC2
         uses: appleboy/ssh-action@master
@@ -112,6 +132,7 @@ jobs:
             
             POLYBOT_IMG_NAME=019273956931.dkr.ecr.eu-central-1.amazonaws.com/docker-project-polybot:${{ github.run_number }}
             YOLO5_IMG_NAME=019273956931.dkr.ecr.eu-central-1.amazonaws.com/docker-project-yolo5:${{ github.run_number }}
+            MONGO_INIT=019273956931.dkr.ecr.eu-central-1.amazonaws.com/docker-project-mongoinit:${{ github.run_number }}
             TELEGRAM_APP_URL=$NGROK_DOMAIN
             """ > .env
             
