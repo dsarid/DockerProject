@@ -81,7 +81,7 @@ jobs:
           host: ${{ env.EC2_PUBLIC_IP }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          source: ./script_mount/relset.sh
+          source: relset.sh
           target: PolybotService/script_mount/
 
       - name: Update the Docker Compose project in the EC2
